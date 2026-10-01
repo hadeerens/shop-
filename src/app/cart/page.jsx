@@ -7,8 +7,15 @@ const SHIPPING = 60; // keep in sync with api/orders/route.js
 export default function CartPage() {
   const { items, remove, clear } = useCart();
   const [form, setForm] = useState({ name: "", phone: "", address: "", payment: "cod" });
+  const [code, setCode] = useState("");
+  const [cp, setCp] = useState({ discount: 0, code: null, msg: "" });
   const [state, setState] = useState({ busy: false, error: "", orderId: null });
   const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
+  async function applyCode() {
+    const r = await fetch("/api/coupon", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code, subtotal }) });
+    const d = await r.json();
+    setCp(r.ok ? { discount: d.discount, code: d.code, msg: d.code ? `Code ${d.code} applied` : "" } : { discount: 0, code: null, msg: d.error });
+  }
   const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
   async function submit(e) {
@@ -17,7 +24,7 @@ export default function CartPage() {
     const res = await fetch("/api/orders", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...form, items: items.map(({ id, size, qty }) => ({ id, size, qty })) }),
+      body: JSON.stringify({ ...form, coupon: cp.code, items: items.map(({ id, size, qty }) => ({ id, size, qty })) }),
     });
     const data = await res.json();
     if (!res.ok) return setState({ busy: false, error: data.error || "Something went wrong", orderId: null });
@@ -45,7 +52,13 @@ export default function CartPage() {
         ))}
         <p className="mt-4 text-sm">Subtotal: {subtotal} EGP</p>
         <p className="text-sm">Shipping: {SHIPPING} EGP</p>
-        <p className="font-semibold">Total: {subtotal + SHIPPING} EGP</p>
+        {cp.discount > 0 && <p className="text-sm">Discount: −{cp.discount} EGP</p>}
+        <p className="font-semibold">Total: {subtotal - cp.discount + SHIPPING} EGP</p>
+        <div className="mt-4 flex gap-2">
+          <input className="flex-1 border bg-white px-3 py-2 uppercase" placeholder="Coupon code" value={code} onChange={(e) => setCode(e.target.value)} />
+          <button type="button" onClick={applyCode} className="px-4" style={{ background: "var(--soft)", color: "var(--accent)" }}>Apply</button>
+        </div>
+        {cp.msg && <p className="mt-1 text-sm" style={{ color: cp.code ? "var(--accent)" : "#b91c1c" }}>{cp.msg}</p>}
       </div>
 
       <form onSubmit={submit} className="space-y-3">

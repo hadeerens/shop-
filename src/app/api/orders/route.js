@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { client } from "@/sanity/client";
+import { applyCoupon } from "@/lib/coupon";
 
 const SHIPPING = 60; // keep in sync with cart/page.jsx
 const bad = (error, status = 400) => NextResponse.json({ error }, { status });
@@ -31,10 +32,12 @@ export async function POST(req) {
   }
 
   const subtotal = lines.reduce((s, l) => s + l.price * l.qty, 0);
+  const cp = await applyCoupon(b.coupon, subtotal);
+  if (cp.error) return bad(cp.error);
   const sb = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
   const { data, error } = await sb
     .from("orders")
-    .insert({ name, phone, address, payment, items: lines, subtotal, shipping: SHIPPING, total: subtotal + SHIPPING })
+    .insert({ name, phone, address, payment, items: lines, subtotal, shipping: SHIPPING, discount: cp.discount, coupon: cp.code, total: subtotal - cp.discount + SHIPPING })
     .select("id")
     .single();
   if (error) return bad("Could not save your order. Please try again.", 500);

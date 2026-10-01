@@ -2,7 +2,7 @@ import "./globals.css";
 import { CartProvider } from "./context/CartContext";
 import Header from "./components/Header";
 
-export const metadata = { title: "Store", description: "Online store" };
+export const metadata = { title: "Shop", description: "Online store" };
 
 export default function RootLayout({ children }) {
   return (

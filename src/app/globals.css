@@ -1,3 +1,6 @@
 @import "tailwindcss";
-:root { --bg: #fafaf7; --ink: #1c1b19; --muted: #77746d; --line: #e4e1d9; --accent: #2f4a3a; }
-body { background: var(--bg); color: var(--ink); font-family: system-ui, sans-serif; }
+:root { --bg: #faf8ff; --ink: #1e1b2e; --muted: #6b6785; --line: #e6e1f5; --soft: #efe9ff; --accent: #6d28d9; }
+body { background: var(--bg); color: var(--ink); font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+img { border-radius: 14px; }
+button, select, input, textarea { border-radius: 10px; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
